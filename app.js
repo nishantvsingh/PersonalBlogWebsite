@@ -4,9 +4,12 @@ const express = require("express");
 const bodyParser = require("body-parser");
 const ejs = require("ejs");
 const _ = require("lodash");
+const mongoose=require('mongoose')
 
 //const { lowerCase } = require("lodash");
 //when using this instead of _.lowerCase() we cab use lowerCase()
+
+mongoose.connect('mongodb://localhost/blogDB')
 
 
 
@@ -22,12 +25,19 @@ app.set('view engine', 'ejs');
 
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(express.static("public"));
+//==========
+const postSchema= ({ // or = new mongoose.Schema({})
+  title: String,
+  content: String
+})
 
-
+const Post=mongoose.model('Post',postSchema)
 
 app.get("/", (req, res) => {
-  res.render("home.ejs", { content: homeStartingContent, posts:posts })
-})
+  Post.find({},function(err,foundPosts){
+    //console.log(foundPosts)
+  res.render("home.ejs", { content: homeStartingContent, posts:foundPosts })
+})})
 
 app.get("/about", (req, res) => {
   res.render("about.ejs", { about: aboutContent })
@@ -40,39 +50,44 @@ app.get("/compose", (req, res) => {
 })
 
 
+
+
+
 app.post("/compose", (req, res) => {
-  // const title=req.body.postTitle;
-  // const body=req.body.postBody;
+  // // const title=req.body.postTitle;
+  // // const body=req.body.postBody;
 
-  const post = {
+  // const post ={
+  //   title: req.body.postTitle,
+  //   body: req.body.postBody
+  // }
+  // posts.push(post);
+  // //made an object that stores title and body and then this object
+  // // is pushed to an global array
+
+  const newpost= new Post({
     title: req.body.postTitle,
-    body: req.body.postBody
-  }
-  //we made an object that stores title and body and then this object
-  // is pushed to an global array
-
-  posts.push(post);
-
-  //console.log(posts);
-
+    content: req.body.postBody
+  })
+  console.log(newpost.title,newpost.content)
+  newpost.save()
   res.redirect("/compose")
 })
 
 // ===================ROUTE PARAMETERS=================================
 
     app.get('/posts/:postName',(req,res)=>{
-    //  console.log(req.params.postName)
-    posts.forEach(function(post){  
-        //alternate of for loop...post is element of array posts starts with post=posts[0] to posts[n]
-      //if(post.title===req.params.postName) console.log('match found')
-        
-      if(  _.lowerCase( post.title )  ===  _.lowerCase( req.params.postName )  )
-        //lowerCase if function of LODASH MODULE
-        { 
-          res.render('post',{ title: post.title , content: post.body})
-        }
-    })
-    
+   
+      Post.find({},function(err,foundPosts){
+        foundPosts.forEach(function(post){  
+          //console.log(foundPosts)
+          if(  _.lowerCase( post.title )  ===  _.lowerCase( req.params.postName )  )
+          //lowerCase if function of LODASH MODULE
+          { 
+            res.render('post',{ title: post.title , content: post.content})
+          }
+        })
+      })
     })
 
 
